@@ -44,6 +44,9 @@ class CreatePaymentAPIView(generics.GenericAPIView):
             is_paid=True,
         )
 
+        order.status = "PAID"
+        order.save(update_fields=["status"])
+
         serializer = PaymentSerializer(payment)
 
         return Response(
