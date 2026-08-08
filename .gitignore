@@ -1,4 +1,21 @@
-# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+db.sqlite3
+
+.env
+.env.*
+
+.vscode/
+.idea/
+
+media/
+staticfiles/
+
+*.log# Python
 __pycache__/
 *.py[cod]
 *.pyo
