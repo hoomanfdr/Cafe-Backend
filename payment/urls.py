@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import CreatePaymentAPIView
 
+
 urlpatterns = [
     path(
         "<int:order_id>/",

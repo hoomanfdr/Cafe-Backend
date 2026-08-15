@@ -7,7 +7,6 @@ class Payment(models.Model):
 
     PAYMENT_METHODS = [
         ("CASH", "Cash"),
-        ("CARD", "Card"),
     ]
 
     order = models.OneToOneField(
@@ -19,6 +18,7 @@ class Payment(models.Model):
     method = models.CharField(
         max_length=20,
         choices=PAYMENT_METHODS,
+        default="CASH",
     )
 
     amount = models.DecimalField(
@@ -26,9 +26,13 @@ class Payment(models.Model):
         decimal_places=2,
     )
 
-    is_paid = models.BooleanField(default=False)
+    is_paid = models.BooleanField(
+        default=False
+    )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
 
     def __str__(self):
         return f"Payment #{self.id}"

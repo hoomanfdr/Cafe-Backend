@@ -16,6 +16,9 @@ class PaymentSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = [
+            "id",
+            "order",
+            "amount",
             "is_paid",
             "created_at",
         ]
