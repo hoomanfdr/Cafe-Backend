@@ -1,39 +1,30 @@
-venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-db.sqlite3
-
-.env
-.env.*
-
-.vscode/
-.idea/
-
-media/
-staticfiles/
-
-*.log# Python
+# Python
 __pycache__/
 *.py[cod]
 *.pyo
+*.pyd
 
 # Virtual Environment
 venv/
+.venv/
+
+# Environment variables
 .env
+.env.*
+!.env.example
 
 # Django
 db.sqlite3
 media/
+staticfiles/
 
-# VS Code
+# IDE
 .vscode/
+.idea/
 
 # OS
 .DS_Store
 Thumbs.db
 
 # Logs
-*.
+*.log
