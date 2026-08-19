@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 
 from rest_framework import generics, status
@@ -24,9 +25,6 @@ class AddToCartAPIView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, product_id):
-        cart, created = Cart.objects.get_or_create(
-            user=request.user
-        )
 
         product = get_object_or_404(
             Product,
@@ -64,36 +62,49 @@ class AddToCartAPIView(generics.GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        cart_item, created = CartItem.objects.get_or_create(
-            cart=cart,
-            product=product,
-        )
+        with transaction.atomic():
 
-        if created:
-            new_quantity = quantity
-        else:
-            new_quantity = cart_item.quantity + quantity
-
-        # Check stock
-        if new_quantity > product.stock:
-            return Response(
-                {
-                    "detail": (
-                        f"Not enough stock for '{product.name}'. "
-                        f"Available: {product.stock}, "
-                        f"requested: {new_quantity}."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+            cart, created = Cart.objects.get_or_create(
+                user=request.user
             )
 
-        cart_item.quantity = new_quantity
-        cart_item.save()
+            cart_item = CartItem.objects.filter(
+                cart=cart,
+                product=product,
+            ).first()
+
+            if cart_item:
+                new_quantity = cart_item.quantity + quantity
+            else:
+                new_quantity = quantity
+
+            # Check stock BEFORE creating/updating CartItem
+            if new_quantity > product.stock:
+                return Response(
+                    {
+                        "detail": (
+                            f"Not enough stock for '{product.name}'. "
+                            f"Available: {product.stock}, "
+                            f"requested: {new_quantity}."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if cart_item:
+                cart_item.quantity = new_quantity
+                cart_item.save(update_fields=["quantity"])
+            else:
+                CartItem.objects.create(
+                    cart=cart,
+                    product=product,
+                    quantity=quantity,
+                )
 
         return Response(
             {
                 "message": "Product added to cart",
-                "quantity": cart_item.quantity,
+                "quantity": new_quantity,
             },
             status=status.HTTP_200_OK,
         )
@@ -103,6 +114,7 @@ class RemoveFromCartAPIView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, product_id):
+
         cart = get_object_or_404(
             Cart,
             user=request.user
@@ -116,7 +128,7 @@ class RemoveFromCartAPIView(generics.GenericAPIView):
 
         if cart_item.quantity > 1:
             cart_item.quantity -= 1
-            cart_item.save()
+            cart_item.save(update_fields=["quantity"])
 
             return Response(
                 {
@@ -139,6 +151,7 @@ class ClearCartAPIView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request):
+
         cart = get_object_or_404(
             Cart,
             user=request.user
@@ -158,20 +171,23 @@ class CartTotalAPIView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+
         cart, created = Cart.objects.get_or_create(
             user=request.user
         )
 
-        total_items = cart.items.count()
+        items = cart.items.select_related("product").all()
+
+        total_items = len(items)
 
         total_quantity = sum(
             item.quantity
-            for item in cart.items.all()
+            for item in items
         )
 
         total_price = sum(
             item.quantity * item.product.price
-            for item in cart.items.all()
+            for item in items
         )
 
         return Response(
@@ -181,4 +197,4 @@ class CartTotalAPIView(generics.GenericAPIView):
                 "total_price": total_price,
             },
             status=status.HTTP_200_OK,
-        ) 
+        )
