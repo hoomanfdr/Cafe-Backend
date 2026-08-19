@@ -11,8 +11,13 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
+import dj_database_url
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
+# ============================================================
+# BASE DIRECTORY
+# ============================================================
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -20,18 +25,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY
 # ============================================================
 
-SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-development-only-change-this-key",
+)
 
 DEBUG = os.environ.get(
     "DJANGO_DEBUG",
     "True",
 ).lower() in ("true", "1", "yes")
 
+
 ALLOWED_HOSTS = [
     host.strip()
     for host in os.environ.get(
         "DJANGO_ALLOWED_HOSTS",
-        "127.0.0.1,localhost",
+        "127.0.0.1,localhost,bershteh.local",
     ).split(",")
     if host.strip()
 ]
@@ -88,6 +97,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "config.urls"
 
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -103,6 +113,7 @@ TEMPLATES = [
     },
 ]
 
+
 WSGI_APPLICATION = "config.wsgi.application"
 
 
@@ -110,12 +121,28 @@ WSGI_APPLICATION = "config.wsgi.application"
 # DATABASE
 # ============================================================
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+# Production:
+# If DATABASE_URL exists, use PostgreSQL (Render).
+
+if os.environ.get("DATABASE_URL"):
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=os.environ.get("DATABASE_URL"),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+
+# Local development:
+# If DATABASE_URL does not exist, use SQLite.
+
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # ============================================================
@@ -168,6 +195,9 @@ USE_TZ = True
 # ============================================================
 
 STATIC_URL = "static/"
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -235,10 +265,6 @@ CSRF_TRUSTED_ORIGINS = [
 # DEVELOPMENT SECURITY SETTINGS
 # ============================================================
 
-# These settings remain disabled for local HTTP development.
-# They should be enabled/configured appropriately when deploying
-# the project behind HTTPS in production.
-
 SECURE_SSL_REDIRECT = False
 
 SESSION_COOKIE_SECURE = False
@@ -266,5 +292,3 @@ SECURE_REFERRER_POLICY = "same-origin"
 # SECURE_HSTS_SECONDS = 31536000
 # SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 # SECURE_HSTS_PRELOAD = True
-#
-# Do not enable these settings during local HTTP development.
