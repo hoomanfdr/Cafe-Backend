@@ -216,6 +216,7 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5500",
     "http://localhost:5500",
+    "http://bershteh.local:5500",
 ]
 
 
@@ -226,6 +227,7 @@ CORS_ALLOWED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5500",
     "http://localhost:5500",
+    "http://bershteh.local:5500",
 ]
 
 
